@@ -67,7 +67,8 @@
                     });
 
                     const tokenData = await tokenResponse.json();
-                    document.getElementById('token-response').textContent = JSON.stringify(tokenData, null, 2);
+                    const combinedData = { credentials, tokenData };
+                    document.getElementById('token-response').textContent = JSON.stringify(combinedData, null, 2);
                 } catch (error) {
                     alert(`Error handling OAuth flow: ${error.message}`);
                 }
