@@ -29,6 +29,7 @@
     <!-- Token response -->
     <h3>Token Response:</h3>
     <pre id="token-response"></pre>
+    <button id="copy-token-response">Copy Token Response</button>
 
     <script>
         // Function to extract query parameters from URL
@@ -102,6 +103,18 @@
                 window.location.href = authUrl; // Redirect to auth URL
             } catch (error) {
                 alert(`Error generating URL: ${error.message}`);
+            }
+        });
+
+        // Add functionality to copy token response
+        document.getElementById('copy-token-response').addEventListener('click', () => {
+            const tokenResponseElement = document.getElementById('token-response');
+            if (tokenResponseElement.textContent) {
+                navigator.clipboard.writeText(tokenResponseElement.textContent)
+                    .then(() => alert('Token response copied to clipboard!'))
+                    .catch(err => alert('Failed to copy token response: ' + err));
+            } else {
+                alert('No token response to copy!');
             }
         });
 
