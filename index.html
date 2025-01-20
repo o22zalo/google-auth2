@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google OAuth2 Authorization</title>
+</head>
+<body>
+    <h1>Google OAuth2 Authorization</h1>
+
+    <!-- Input for credentials -->
+    <label for="credentials">Paste your Google OAuth2 credentials (JSON):</label>
+    <textarea id="credentials" rows="10" cols="50" placeholder="Paste your JSON here..."></textarea>
+    <br><br>
+
+    <!-- Input for scopes -->
+    <label for="scopes">Scopes (comma-separated):</label>
+    <input id="scopes" type="text" placeholder="e.g., https://www.googleapis.com/auth/drive" size="50">
+    <br><br>
+
+    <button id="generate-url">Generate Authorization URL</button>
+    <br><br>
+
+    <!-- Authorization URL -->
+    <label for="auth-url">Authorization URL:</label>
+    <input id="auth-url" type="text" readonly size="100">
+    <br><br>
+
+    <!-- Token response -->
+    <h3>Token Response:</h3>
+    <pre id="token-response"></pre>
+
+    <script>
+        // Function to extract query parameters from URL
+        function getQueryParam(param) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(param);
+        }
+
+        // Handle OAuth2 flow
+        async function handleOAuthFlow() {
+            const authCode = getQueryParam('code');
+
+            if (authCode) {
+                try {
+                    const credentials = JSON.parse(localStorage.getItem('credentials'));
+
+                    if (!credentials || !credentials.web) {
+                        throw new Error('Credentials not found. Please enter and save them again.');
+                    }
+
+                    const { client_id, client_secret, redirect_uris } = credentials.web;
+                    const redirect_uri = redirect_uris[0];
+
+                    const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded'
+                        },
+                        body: new URLSearchParams({
+                            code: authCode,
+                            client_id,
+                            client_secret,
+                            redirect_uri,
+                            grant_type: 'authorization_code'
+                        })
+                    });
+
+                    const tokenData = await tokenResponse.json();
+                    document.getElementById('token-response').textContent = JSON.stringify(tokenData, null, 2);
+                } catch (error) {
+                    alert(`Error handling OAuth flow: ${error.message}`);
+                }
+            }
+        }
+
+        document.getElementById('generate-url').addEventListener('click', () => {
+            try {
+                const credentials = JSON.parse(document.getElementById('credentials').value);
+                const scopes = document.getElementById('scopes').value.split(',').map(s => s.trim());
+
+                if (!credentials.web) throw new Error('Invalid credentials format. Expecting JSON with a `web` key.');
+
+                const { client_id, redirect_uris } = credentials.web;
+                const redirect_uri = redirect_uris[0];
+
+                // Save credentials to localStorage for later use
+                localStorage.setItem('credentials', JSON.stringify(credentials));
+
+                const params = new URLSearchParams({
+                    client_id,
+                    redirect_uri,
+                    response_type: 'code',
+                    scope: scopes.join(' '),
+                    access_type: 'offline',
+                    prompt: 'consent'
+                });
+
+                const authUrl = `https://accounts.google.com/o/oauth2/auth?${params.toString()}`;
+                document.getElementById('auth-url').value = authUrl;
+                window.location.href = authUrl; // Redirect to auth URL
+            } catch (error) {
+                alert(`Error generating URL: ${error.message}`);
+            }
+        });
+
+        // Check for authorization code in URL
+        handleOAuthFlow();
+    </script>
+</body>
+</html>
