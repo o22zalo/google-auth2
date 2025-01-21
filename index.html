@@ -197,7 +197,8 @@
                     throw new Error('Token or credentials not found. Please authenticate again.');
                 }
 
-                const { client_id, client_secret, refresh_token } = combinedData;
+                const { client_id, client_secret } = combinedData.web;
+                const { refresh_token } = combinedData;
 
                 const refreshResponse = await fetch('https://oauth2.googleapis.com/token', {
                     method: 'POST',
