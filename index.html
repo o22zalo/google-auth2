@@ -131,12 +131,15 @@
                     });
 
                     const tokenData = await tokenResponse.json();
+                    console.log('Token Data:', tokenData);
                     const combinedData = { ...credentials, ...tokenData };
+                    console.log('Combined Data:', combinedData);
                     document.getElementById('token-response').textContent = JSON.stringify(combinedData, null, 2);
 
                     // Save token data to localStorage
                     localStorage.setItem('combinedData', JSON.stringify(combinedData));
                 } catch (error) {
+                    console.error('Error handling OAuth flow:', error);
                     alert(`Error handling OAuth flow: ${error.message}`);
                 }
             }
@@ -168,6 +171,7 @@
                 document.getElementById('auth-url').value = authUrl;
                 window.location.href = authUrl; // Redirect to auth URL
             } catch (error) {
+                console.error('Error generating URL:', error);
                 alert(`Error generating URL: ${error.message}`);
             }
         });
@@ -209,14 +213,17 @@
                 });
 
                 const refreshedData = await refreshResponse.json();
+                console.log('Refreshed Data:', refreshedData);
                 combinedData.access_token = refreshedData.access_token;
                 combinedData.expires_in = refreshedData.expires_in;
 
+                console.log('Updated Combined Data:', combinedData);
                 localStorage.setItem('combinedData', JSON.stringify(combinedData));
                 document.getElementById('token-response').textContent = JSON.stringify(combinedData, null, 2);
 
                 alert('Access token refreshed successfully!');
             } catch (error) {
+                console.error('Error refreshing token:', error);
                 alert(`Error refreshing token: ${error.message}`);
             }
         });
