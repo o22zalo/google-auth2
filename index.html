@@ -30,6 +30,11 @@
     <h3>Token Response:</h3>
     <pre id="token-response"></pre>
     <button id="copy-token-response">Copy Token Response</button>
+    <br><br>
+
+    <!-- Additional Buttons -->
+    <button id="refresh-token">Refresh Access Token</button>
+    <button id="copy-access-token">Copy Access Token</button>
 
     <script>
         // Function to extract query parameters from URL
@@ -70,6 +75,9 @@
                     const tokenData = await tokenResponse.json();
                     const combinedData = { credentials, tokenData };
                     document.getElementById('token-response').textContent = JSON.stringify(combinedData, null, 2);
+
+                    // Save token data to localStorage
+                    localStorage.setItem('tokenData', JSON.stringify(tokenData));
                 } catch (error) {
                     alert(`Error handling OAuth flow: ${error.message}`);
                 }
@@ -115,6 +123,57 @@
                     .catch(err => alert('Failed to copy token response: ' + err));
             } else {
                 alert('No token response to copy!');
+            }
+        });
+
+        // Refresh Token Functionality
+        document.getElementById('refresh-token').addEventListener('click', async () => {
+            try {
+                const tokenData = JSON.parse(localStorage.getItem('tokenData'));
+                const credentials = JSON.parse(localStorage.getItem('credentials'));
+
+                if (!tokenData || !credentials) {
+                    throw new Error('Token or credentials not found. Please authenticate again.');
+                }
+
+                const { client_id, client_secret } = credentials.web;
+                const { refresh_token } = tokenData;
+
+                const refreshResponse = await fetch('https://oauth2.googleapis.com/token', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: new URLSearchParams({
+                        client_id,
+                        client_secret,
+                        refresh_token,
+                        grant_type: 'refresh_token'
+                    })
+                });
+
+                const refreshedData = await refreshResponse.json();
+                tokenData.access_token = refreshedData.access_token;
+                tokenData.expires_in = refreshedData.expires_in;
+
+                localStorage.setItem('tokenData', JSON.stringify(tokenData));
+                document.getElementById('token-response').textContent = JSON.stringify(tokenData, null, 2);
+
+                alert('Access token refreshed successfully!');
+            } catch (error) {
+                alert(`Error refreshing token: ${error.message}`);
+            }
+        });
+
+        // Copy Access Token Functionality
+        document.getElementById('copy-access-token').addEventListener('click', () => {
+            const tokenData = JSON.parse(localStorage.getItem('tokenData'));
+            if (tokenData && tokenData.access_token) {
+                navigator.clipboard.writeText(tokenData.access_token)
+                    .then(() => alert('Access token copied to clipboard!'))
+                    .catch(err => alert('Failed to copy access token: ' + err));
+            } else {
+                alert('No access token available to copy!');
             }
         });
 
