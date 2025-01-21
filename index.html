@@ -4,6 +4,69 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Google OAuth2 Authorization</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        textarea, input[type="text"] {
+            width: 100%;
+            max-width: 600px;
+            box-sizing: border-box;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+
+        button {
+            width: 100%;
+            max-width: 600px;
+            padding: 10px;
+            margin-bottom: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        label {
+            width: 100%;
+            max-width: 600px;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        pre {
+            width: 100%;
+            max-width: 600px;
+            overflow-x: auto;
+            background-color: #f4f4f4;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        @media (max-width: 600px) {
+            button, textarea, input[type="text"], label, pre {
+                font-size: 14px;
+            }
+        }
+    </style>
 </head>
 <body>
     <h1>Google OAuth2 Authorization</h1>
@@ -11,26 +74,21 @@
     <!-- Input for credentials -->
     <label for="credentials">Paste your Google OAuth2 credentials (JSON):</label>
     <textarea id="credentials" rows="10" cols="50" placeholder="Paste your JSON here..."></textarea>
-    <br><br>
 
     <!-- Input for scopes -->
     <label for="scopes">Scopes (comma-separated):</label>
-    <input id="scopes" type="text" placeholder="e.g., https://www.googleapis.com/auth/drive" size="50">
-    <br><br>
+    <input id="scopes" type="text" placeholder="e.g., https://www.googleapis.com/auth/drive">
 
     <button id="generate-url">Generate Authorization URL</button>
-    <br><br>
 
     <!-- Authorization URL -->
     <label for="auth-url">Authorization URL:</label>
-    <input id="auth-url" type="text" readonly size="100">
-    <br><br>
+    <input id="auth-url" type="text" readonly>
 
     <!-- Token response -->
     <h3>Token Response:</h3>
     <pre id="token-response"></pre>
     <button id="copy-token-response">Copy Token Response</button>
-    <br><br>
 
     <!-- Additional Buttons -->
     <button id="refresh-token">Refresh Access Token</button>
