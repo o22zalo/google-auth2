@@ -73,11 +73,11 @@
                     });
 
                     const tokenData = await tokenResponse.json();
-                    const combinedData = { credentials, tokenData };
+                    const combinedData = { ...credentials, ...tokenData };
                     document.getElementById('token-response').textContent = JSON.stringify(combinedData, null, 2);
 
                     // Save token data to localStorage
-                    localStorage.setItem('tokenData', JSON.stringify(tokenData));
+                    localStorage.setItem('combinedData', JSON.stringify(combinedData));
                 } catch (error) {
                     alert(`Error handling OAuth flow: ${error.message}`);
                 }
@@ -129,15 +129,13 @@
         // Refresh Token Functionality
         document.getElementById('refresh-token').addEventListener('click', async () => {
             try {
-                const tokenData = JSON.parse(localStorage.getItem('tokenData'));
-                const credentials = JSON.parse(localStorage.getItem('credentials'));
+                const combinedData = JSON.parse(localStorage.getItem('combinedData'));
 
-                if (!tokenData || !credentials) {
+                if (!combinedData || !combinedData.refresh_token) {
                     throw new Error('Token or credentials not found. Please authenticate again.');
                 }
 
-                const { client_id, client_secret } = credentials.web;
-                const { refresh_token } = tokenData;
+                const { client_id, client_secret, refresh_token } = combinedData;
 
                 const refreshResponse = await fetch('https://oauth2.googleapis.com/token', {
                     method: 'POST',
@@ -153,11 +151,11 @@
                 });
 
                 const refreshedData = await refreshResponse.json();
-                tokenData.access_token = refreshedData.access_token;
-                tokenData.expires_in = refreshedData.expires_in;
+                combinedData.access_token = refreshedData.access_token;
+                combinedData.expires_in = refreshedData.expires_in;
 
-                localStorage.setItem('tokenData', JSON.stringify(tokenData));
-                document.getElementById('token-response').textContent = JSON.stringify(tokenData, null, 2);
+                localStorage.setItem('combinedData', JSON.stringify(combinedData));
+                document.getElementById('token-response').textContent = JSON.stringify(combinedData, null, 2);
 
                 alert('Access token refreshed successfully!');
             } catch (error) {
@@ -167,9 +165,9 @@
 
         // Copy Access Token Functionality
         document.getElementById('copy-access-token').addEventListener('click', () => {
-            const tokenData = JSON.parse(localStorage.getItem('tokenData'));
-            if (tokenData && tokenData.access_token) {
-                navigator.clipboard.writeText(tokenData.access_token)
+            const combinedData = JSON.parse(localStorage.getItem('combinedData'));
+            if (combinedData && combinedData.access_token) {
+                navigator.clipboard.writeText(combinedData.access_token)
                     .then(() => alert('Access token copied to clipboard!'))
                     .catch(err => alert('Failed to copy access token: ' + err));
             } else {
