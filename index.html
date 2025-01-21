@@ -70,8 +70,8 @@
 </head>
 <body>
     <h1>Google OAuth2 Authorization</h1>
-
-    <!-- Combo for Credentials -->
+	
+	<!-- Combo for Credentials -->
     <label for="credentials-select">Select Default Credentials:</label>
     <select id="credentials-select">
         <option value="">-- Select Credentials --</option>
@@ -81,12 +81,12 @@
     <label for="credentials">Paste your Google OAuth2 credentials (JSON):</label>
     <textarea id="credentials" rows="10" cols="50" placeholder="Paste your JSON here..."></textarea>
 
-    <!-- Combo for Scopes -->
+	<!-- Combo for Scopes -->
     <label for="scopes-select">Select Default Scopes:</label>
     <select id="scopes-select">
         <option value="">-- Select Scopes --</option>
     </select>
-
+	
     <!-- Input for scopes -->
     <label for="scopes">Scopes (comma-separated):</label>
     <input id="scopes" type="text" placeholder="e.g., https://www.googleapis.com/auth/drive">
@@ -107,7 +107,13 @@
     <button id="copy-access-token">Copy Access Token</button>
 
     <script>
-        const defaultConfigurations = {
+        // Function to extract query parameters from URL
+        function getQueryParam(param) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(param);
+        }
+		//Config
+		const defaultConfigurations = {
             credentials: {
                 "Example Credential": "eyJ3ZWIiOnsiY2xpZW50X2lkIjoiMjM1MzE0MzExMTMzLWlubXMyNnFqbHQzcTcxbmdpYm9waHQzbm9jaDVqbzJ2LmFwcHMuZ29vZ2xldXNlcmNvbnRlbnQuY29tIiwicHJvamVjdF9pZCI6Imh0dHAtc2hvcnRjdXRzLTAxIiwiYXV0aF91cmkiOiJodHRwczovL2FjY291bnRzLmdvb2dsZS5jb20vby9vYXV0aDIvYXV0aCIsInRva2VuX3VyaSI6Imh0dHBzOi8vb2F1dGgyLmdvb2dsZWFwaXMuY29tL3Rva2VuIiwiYXV0aF9wcm92aWRlcl94NTA5X2NlcnRfdXJsIjoiaHR0cHM6Ly93d3cuZ29vZ2xlYXBpcy5jb20vb2F1dGgyL3YxL2NlcnRzIiwiY2xpZW50X3NlY3JldCI6IkdPQ1NQWC03TUFPVDJjeG5SbE1idGNzMTR1eU04a0g3SU42IiwicmVkaXJlY3RfdXJpcyI6WyJodHRwczovL28yMnphbG8uZ2l0aHViLmlvL2dvb2dsZS1hdXRoMiJdfX0="
             },
@@ -155,7 +161,50 @@
             }
         });
 
-        // Existing scripts for OAuth flow remain unchanged
+        // Handle OAuth2 flow
+        async function handleOAuthFlow() {
+            const authCode = getQueryParam('code');
+
+            if (authCode) {
+                try {
+                    const credentials = JSON.parse(localStorage.getItem('credentials'));
+
+                    if (!credentials || !credentials.web) {
+                        throw new Error('Credentials not found. Please enter and save them again.');
+                    }
+
+                    const { client_id, client_secret, redirect_uris } = credentials.web;
+                    const redirect_uri = redirect_uris[0];
+
+                    const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded'
+                        },
+                        body: new URLSearchParams({
+                            code: authCode,
+                            client_id,
+                            client_secret,
+                            redirect_uri,
+                            grant_type: 'authorization_code'
+                        })
+                    });
+
+                    const tokenData = await tokenResponse.json();
+                    console.log('Token Data:', tokenData);
+                    const combinedData = { ...credentials, ...tokenData };
+                    console.log('Combined Data:', combinedData);
+                    document.getElementById('token-response').textContent = JSON.stringify(combinedData, null, 2);
+
+                    // Save token data to localStorage
+                    localStorage.setItem('combinedData', JSON.stringify(combinedData));
+                } catch (error) {
+                    console.error('Error handling OAuth flow:', error);
+                    alert(`Error handling OAuth flow: ${error.message}`);
+                }
+            }
+        }
+
         document.getElementById('generate-url').addEventListener('click', () => {
             try {
                 const credentials = JSON.parse(document.getElementById('credentials').value);
@@ -186,6 +235,74 @@
                 alert(`Error generating URL: ${error.message}`);
             }
         });
+
+        // Add functionality to copy token response
+        document.getElementById('copy-token-response').addEventListener('click', () => {
+            const tokenResponseElement = document.getElementById('token-response');
+            if (tokenResponseElement.textContent) {
+                navigator.clipboard.writeText(tokenResponseElement.textContent)
+                    .then(() => alert('Token response copied to clipboard!'))
+                    .catch(err => alert('Failed to copy token response: ' + err));
+            } else {
+                alert('No token response to copy!');
+            }
+        });
+
+        // Refresh Token Functionality
+        document.getElementById('refresh-token').addEventListener('click', async () => {
+            try {
+                const combinedData = JSON.parse(localStorage.getItem('combinedData'));
+
+                if (!combinedData || !combinedData.refresh_token) {
+                    throw new Error('Token or credentials not found. Please authenticate again.');
+                }
+
+                const { client_id, client_secret } = combinedData.web;
+                const { refresh_token } = combinedData;
+
+                const refreshResponse = await fetch('https://oauth2.googleapis.com/token', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: new URLSearchParams({
+                        client_id,
+                        client_secret,
+                        refresh_token,
+                        grant_type: 'refresh_token'
+                    })
+                });
+
+                const refreshedData = await refreshResponse.json();
+                console.log('Refreshed Data:', refreshedData);
+                combinedData.access_token = refreshedData.access_token;
+                combinedData.expires_in = refreshedData.expires_in;
+
+                console.log('Updated Combined Data:', combinedData);
+                localStorage.setItem('combinedData', JSON.stringify(combinedData));
+                document.getElementById('token-response').textContent = JSON.stringify(combinedData, null, 2);
+
+                alert('Access token refreshed successfully!');
+            } catch (error) {
+                console.error('Error refreshing token:', error);
+                alert(`Error refreshing token: ${error.message}`);
+            }
+        });
+
+        // Copy Access Token Functionality
+        document.getElementById('copy-access-token').addEventListener('click', () => {
+            const combinedData = JSON.parse(localStorage.getItem('combinedData'));
+            if (combinedData && combinedData.access_token) {
+                navigator.clipboard.writeText(combinedData.access_token)
+                    .then(() => alert('Access token copied to clipboard!'))
+                    .catch(err => alert('Failed to copy access token: ' + err));
+            } else {
+                alert('No access token available to copy!');
+            }
+        });
+
+        // Check for authorization code in URL
+        handleOAuthFlow();
     </script>
 </body>
 </html>
