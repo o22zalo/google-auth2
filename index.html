@@ -388,6 +388,13 @@
           showToast("No access token available to copy!");
         }
       });
+      // Copy Credials and Token Functionality
+      document.getElementById("copy-token-response").addEventListener("click", () => {
+        navigator.clipboard
+          .writeText(document.getElementById("token-response").textContent)
+          .then(() => showToast("Token Response copied to clipboard!"))
+          .catch((err) => showToast("Failed to copy Token Response " + err));
+      });
 
       // Check for authorization code in URL
       handleOAuthFlow();
