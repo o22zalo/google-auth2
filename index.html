@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Google OAuth2 Authorization</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+      }
+
+      h1 {
+        text-align: center;
+      }
+
+      textarea,
+      input[type="text"],
+      select {
+        width: 100%;
+        max-width: 600px;
+        box-sizing: border-box;
+        padding: 10px;
+        margin-bottom: 10px;
+      }
+
+      button {
+        width: 100%;
+        max-width: 600px;
+        padding: 10px;
+        margin-bottom: 10px;
+        background-color: #4caf50;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+      }
+
+      button:hover {
+        background-color: #45a049;
+      }
+
+      label {
+        width: 100%;
+        max-width: 600px;
+        margin-bottom: 5px;
+        font-weight: bold;
+      }
+
+      pre {
+        width: 100%;
+        max-width: 600px;
+        overflow-x: auto;
+        background-color: #f4f4f4;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+      }
+
+      @media (max-width: 600px) {
+        button,
+        textarea,
+        input[type="text"],
+        select,
+        label,
+        pre {
+          font-size: 14px;
+        }
+      }
+
+      .toast {
+        visibility: hidden;
+        min-width: 250px;
+        margin-left: -125px;
+        background-color: #333;
+        color: #fff;
+        text-align: center;
+        border-radius: 2px;
+        padding: 16px;
+        position: fixed;
+        z-index: 1;
+        left: 50%;
+        bottom: 30px;
+        font-size: 17px;
+      }
+
+      .toast.show {
+        visibility: visible;
+        -webkit-animation: fadein 0.5s, fadeout 0.5s 2.5s;
+        animation: fadein 0.5s, fadeout 0.5s 2.5s;
+      }
+
+      @-webkit-keyframes fadein {
+        from {
+          bottom: 0;
+          opacity: 0;
+        }
+        to {
+          bottom: 30px;
+          opacity: 1;
+        }
+      }
+
+      @keyframes fadein {
+        from {
+          bottom: 0;
+          opacity: 0;
+        }
+        to {
+          bottom: 30px;
+          opacity: 1;
+        }
+      }
+
+      @-webkit-keyframes fadeout {
+        from {
+          bottom: 30px;
+          opacity: 1;
+        }
+        to {
+          bottom: 0;
+          opacity: 0;
+        }
+      }
+
+      @keyframes fadeout {
+        from {
+          bottom: 30px;
+          opacity: 1;
+        }
+        to {
+          bottom: 0;
+          opacity: 0;
+        }
+      }
+    </style>
+    <script src="config.js"></script>
+  </head>
+  <body>
+    <h1>Google OAuth2 Authorization - v.1.1</h1>
+
+    <!-- Combo for Credentials -->
+    <label for="credentials-select">Select Default Credentials:</label>
+    <select id="credentials-select">
+      <option value="">-- Select Credentials --</option>
+    </select>
+
+    <!-- Input for credentials -->
+    <label for="credentials">Paste your Google OAuth2 credentials (JSON):</label>
+    <textarea id="credentials" rows="10" cols="50" placeholder="Paste your JSON here..."></textarea>
+
+    <!-- Combo for Scopes -->
+    <label for="scopes-select">Select Default Scopes:</label>
+    <select id="scopes-select">
+      <option value="">-- Select Scopes --</option>
+    </select>
+
+    <!-- Input for scopes -->
+    <label for="scopes">Scopes (comma-separated):</label>
+    <input id="scopes" type="text" placeholder="e.g., https://www.googleapis.com/auth/drive" />
+
+    <button id="generate-url">Generate Authorization URL</button>
+
+    <!-- Authorization URL -->
+    <label for="auth-url">Authorization URL:</label>
+    <input id="auth-url" type="text" readonly />
+
+    <!-- Token response -->
+    <h3>Token Response:</h3>
+    <pre id="token-response"></pre>
+    <button id="copy-token-response">Copy Token Response</button>
+
+    <!-- Additional Buttons -->
+    <button id="refresh-token">Refresh Access Token</button>
+    <button id="copy-access-token">Copy Access Token</button>
+
+    <!-- Toast message -->
+    <div id="toast" class="toast">No access token available to copy!</div>
+
+    <script>
+      // Function to show toast
+      function showToast(message) {
+        const toast = document.getElementById("toast");
+        toast.textContent = message;
+        toast.className = "toast show";
+        setTimeout(() => {
+          toast.className = toast.className.replace("toast show", "toast");
+        }, 3000);
+      }
+      // Function to extract query parameters from URL
+      function getQueryParam(param) {
+        const urlParams = new URLSearchParams(window.location.search);
+        return urlParams.get(param);
+      }
+
+      // Helper function to get the appropriate redirect_uri
+      function getRedirectUri(redirectUris) {
+        if (redirectUris.length === 1) return redirectUris[0];
+        return redirectUris.find((uri) => uri.startsWith(window.location.origin)) || redirectUris[0];
+      }
+
+      // Firebase Realtime Database URL
+      const firebaseUrl = "https://http-shortcuts-01-default-rtdb.asia-southeast1.firebasedatabase.app/oauth2.json";
+
+      // Hàm lưu dữ liệu vào Firebase
+      async function saveToFirebase(data) {
+        try {
+          const response = await fetch(firebaseUrl, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(data), // Gửi dữ liệu JSON đến Firebase
+          });
+
+          if (response.ok) {
+            console.log("Data saved to Firebase successfully:", await response.json());
+            showToast("Data saved to Firebase successfully!");
+          } else {
+            showToast("Failed to save data to Firebase.");
+          }
+        } catch (error) {
+          console.error("Error saving data to Firebase:", error);
+          showToast(`Error: ${error.message}`);
+        }
+      }
+      // Populate credentials select
+      const credentialsSelect = document.getElementById("credentials-select");
+      for (const key in defaultConfigurations.credentials) {
+        const option = document.createElement("option");
+        option.value = defaultConfigurations.credentials[key];
+        option.textContent = key;
+        credentialsSelect.appendChild(option);
+      }
+
+      // Populate scopes select
+      const scopesSelect = document.getElementById("scopes-select");
+      for (const key in defaultConfigurations.scopes) {
+        const option = document.createElement("option");
+        option.value = defaultConfigurations.scopes[key];
+        option.textContent = key;
+        scopesSelect.appendChild(option);
+      }
+
+      // Handle credentials select change
+      credentialsSelect.addEventListener("change", () => {
+        const selected = credentialsSelect.value;
+        if (selected) {
+          const decoded = JSON.parse(atob(selected));
+          document.getElementById("credentials").value = JSON.stringify(decoded, null, 2);
+        } else {
+          document.getElementById("credentials").value = "";
+        }
+      });
+
+      // Handle scopes select change
+      scopesSelect.addEventListener("change", () => {
+        const selected = scopesSelect.value;
+        if (selected) {
+          document.getElementById("scopes").value = selected;
+        } else {
+          document.getElementById("scopes").value = "";
+        }
+      });
+
+      // Handle OAuth2 flow
+      async function handleOAuthFlow() {
+        const authCode = getQueryParam("code");
+
+        if (authCode) {
+          try {
+            const credentials = JSON.parse(localStorage.getItem("credentials"));
+
+            if (!credentials || !credentials.web) {
+              throw new Error("Credentials not found. Please enter and save them again.");
+            }
+
+            const { client_id, client_secret, redirect_uris } = credentials.web;
+            const redirect_uri = getRedirectUri(redirect_uris);
+
+            const tokenResponse = await fetch("https://oauth2.googleapis.com/token", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+              },
+              body: new URLSearchParams({
+                code: authCode,
+                client_id,
+                client_secret,
+                redirect_uri,
+                grant_type: "authorization_code",
+              }),
+            });
+
+            const tokenData = await tokenResponse.json();
+            console.log("Token Data:", tokenData);
+            const combinedData = { ...credentials, ...tokenData };
+            console.log("Combined Data:", combinedData);
+            document.getElementById("token-response").textContent = JSON.stringify(combinedData, null, 2);
+
+            // Save token data to localStorage
+            localStorage.setItem("combinedData", JSON.stringify(combinedData));
+
+            // Gọi hàm lưu dữ liệu vào Firebase ngay sau khi lưu vào localStorage
+            await saveToFirebase({ google: { ...combinedData } });
+          } catch (error) {
+            console.error("Error handling OAuth flow:", error);
+            showToast(`Error handling OAuth flow: ${error.message}`);
+          }
+        }
+      }
+
+      document.getElementById("generate-url").addEventListener("click", () => {
+        try {
+          const credentials = JSON.parse(document.getElementById("credentials").value);
+          const scopes = document
+            .getElementById("scopes")
+            .value.split(",")
+            .map((s) => s.trim());
+
+          if (!credentials.web) throw new Error("Invalid credentials format. Expecting JSON with a `web` key.");
+
+          const { client_id, redirect_uris } = credentials.web;
+          const redirect_uri = getRedirectUri(redirect_uris);
+
+          // Save credentials to localStorage for later use
+          localStorage.setItem("credentials", JSON.stringify(credentials));
+
+          const params = new URLSearchParams({
+            client_id,
+            redirect_uri,
+            response_type: "code",
+            scope: scopes.join(" "),
+            access_type: "offline",
+            prompt: "consent",
+          });
+
+          const authUrl = `https://accounts.google.com/o/oauth2/auth?${params.toString()}`;
+          document.getElementById("auth-url").value = authUrl;
+          window.location.href = authUrl; // Redirect to auth URL
+        } catch (error) {
+          console.error("Error generating URL:", error);
+          showToast(`Error generating URL: ${error.message}`);
+        }
+      });
+
+      // Refresh Token Functionality
+      document.getElementById("refresh-token").addEventListener("click", async () => {
+        try {
+          const combinedData = JSON.parse(localStorage.getItem("combinedData"));
+
+          if (!combinedData || !combinedData.refresh_token) {
+            throw new Error("Token or credentials not found. Please authenticate again.");
+          }
+
+          const { client_id, client_secret, redirect_uris } = combinedData.web;
+          const redirect_uri = getRedirectUri(redirect_uris);
+
+          const refreshResponse = await fetch("https://oauth2.googleapis.com/token", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/x-www-form-urlencoded",
+            },
+            body: new URLSearchParams({
+              client_id,
+              client_secret,
+              refresh_token: combinedData.refresh_token,
+              redirect_uri,
+              grant_type: "refresh_token",
+            }),
+          });
+
+          const refreshedData = await refreshResponse.json();
+          console.log("Refreshed Data:", refreshedData);
+          combinedData.access_token = refreshedData.access_token;
+          combinedData.expires_in = refreshedData.expires_in;
+
+          console.log("Updated Combined Data:", combinedData);
+          localStorage.setItem("combinedData", JSON.stringify(combinedData));
+          document.getElementById("token-response").textContent = JSON.stringify(combinedData, null, 2);
+
+          showToast("Access token refreshed successfully!");
+        } catch (error) {
+          console.error("Error refreshing token:", error);
+          showToast(`Error refreshing token: ${error.message}`);
+        }
+      });
+
+      // Copy Access Token Functionality
+      document.getElementById("copy-access-token").addEventListener("click", () => {
+        const combinedData = JSON.parse(localStorage.getItem("combinedData"));
+        if (combinedData && combinedData.access_token) {
+          navigator.clipboard
+            .writeText(combinedData.access_token)
+            .then(() => showToast("Access token copied to clipboard!"))
+            .catch((err) => showToast("Failed to copy access token: " + err));
+        } else {
+          showToast("No access token available to copy!");
+        }
+      });
+      // Copy Credials and Token Functionality
+      document.getElementById("copy-token-response").addEventListener("click", () => {
+        navigator.clipboard
+          .writeText(document.getElementById("token-response").textContent)
+          .then(() => showToast("Token Response copied to clipboard!"))
+          .catch((err) => showToast("Failed to copy Token Response " + err));
+      });
+
+      // Check for authorization code in URL
+      handleOAuthFlow();
+    </script>
+  </body>
+</html>
