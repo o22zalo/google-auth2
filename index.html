@@ -239,7 +239,7 @@
               if ("project_number" in clientId !== true) clientId["project_number"] = clientId["client_id"].split("-")[0];
             } catch {}
 
-            let curClientId = { google: { web: { clientId } } };
+            let curClientId = { web: { clientId } };
             optFetch = window.RTDBHelper.STORE.R_AUTH2_CLIENTID_CURRENT_PUBLIC.CreateFetchOptionsBySave(`cur-clientid@gmail.com`, curClientId);
             response = await fetch(optFetch.url, optFetch);
           }
