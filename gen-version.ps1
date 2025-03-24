@@ -1,3 +1,5 @@
+chcp 65001 > nul
+setlocal enabledelayedexpansion
 # Đường dẫn đến file HTML
 $filePath = "e:\o\google-auth2\index.html"
 
