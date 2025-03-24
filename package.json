@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "config.js",
   "scripts": {
-    "deploy": "powershell -ExecutionPolicy ByPass -File e:/o/google-auth2/gen-version.ps1 && git opushforce && surge E:/o/google-auth2 google-auth2.surge.sh"
+    "deploy": "chcp 65001&&powershell -ExecutionPolicy ByPass -File e:/o/google-auth2/gen-version.ps1 && git opushforce && surge E:/o/google-auth2 google-auth2.surge.sh"
   },
   "author": "",
   "license": "ISC",
