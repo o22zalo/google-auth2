@@ -75,12 +75,12 @@ const RTDBHelper = (() => {
   const RTDBEmails = {
     [TREE_KEY.RPath]: {
       url: `https://http-shortcuts-08-default-rtdb.asia-southeast1.firebasedatabase.app`,
-      auth: `uJIoKugV8544zNQyMGIoO2QasJRnBrJFIo8DOV0s`,
+      auth: ``,
       root: `emails`,
     },
     [TREE_KEY.RPathByDate]: {
       url: `https://http-shortcuts-09-default-rtdb.asia-southeast1.firebasedatabase.app`,
-      auth: `uKLM6KeNCPncBM7dGbjNSSH2y5zsnaXO517mWZ6P`,
+      auth: ``,
       root: `emails`,
     },
   };
