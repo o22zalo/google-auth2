@@ -143,7 +143,7 @@
     <script src="config.js"></script>
   </head>
   <body>
-    <h1>Google OAuth2 Authorization - v.1.25.03.24.1</h1>
+    <h1>Google OAuth2 Authorization - v.1.25.03.24.2</h1>
 
     <!-- Combo for Credentials -->
     <label for="credentials-select">Select Default Credentials:</label>
@@ -211,7 +211,7 @@
       // Hàm lưu dữ liệu vào Firebase
       async function saveToFirebase(data) {
         try {
-          const response = await fetch(firebaseUrl, {
+          let response = await fetch(firebaseUrl, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
