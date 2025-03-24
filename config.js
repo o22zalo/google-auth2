@@ -32,6 +32,7 @@ const RTDBHelper = (() => {
     EXECUTE_JS_FUNCTION_SCRIPTID_PUBLIC: "EXECUTE_JS_FUNCTION_SCRIPTID_PUBLIC",
     R_AUTH2_STORE: "R_AUTH2_STORE",
     R_AUTH2_STORE_PUBLIC: "R_AUTH2_STORE_PUBLIC",
+    R_AUTH2_CLIENTID_CURRENT_PUBLIC: "R_AUTH2_CLIENTID_CURRENT_PUBLIC",
   };
   const STORE_CONFIG = {
     [STORE_KEY.GOOGLE_GEMINI_API_KEY]: {
@@ -64,17 +65,22 @@ const RTDBHelper = (() => {
       auth: ``,
       root: STORE_KEY.R_AUTH2_STORE_PUBLIC,
     },
+    [STORE_KEY.R_AUTH2_CLIENTID_CURRENT_PUBLIC]: {
+      url: `https://r-auth2-client-current-public-default-rtdb.asia-southeast1.firebasedatabase.app/`,
+      auth: ``,
+      root: STORE_KEY.R_AUTH2_CLIENTID_CURRENT_PUBLIC,
+    },
   };
 
   const RTDBEmails = {
     [TREE_KEY.RPath]: {
       url: `https://http-shortcuts-08-default-rtdb.asia-southeast1.firebasedatabase.app`,
-      auth: ``,
+      auth: `uJIoKugV8544zNQyMGIoO2QasJRnBrJFIo8DOV0s`,
       root: `emails`,
     },
     [TREE_KEY.RPathByDate]: {
       url: `https://http-shortcuts-09-default-rtdb.asia-southeast1.firebasedatabase.app`,
-      auth: ``,
+      auth: `uKLM6KeNCPncBM7dGbjNSSH2y5zsnaXO517mWZ6P`,
       root: `emails`,
     },
   };
@@ -275,12 +281,13 @@ const RTDBHelper = (() => {
       this.config = STORE_CONFIG[storeKey];
     }
 
-    CreateFetchOptionsBySave(email, objData) {
+    CreateFetchOptionsBySave(email, objData, VAL_SUFFIX = "") {
       try {
         let fetchOptions = CreateFetchOptions(email, Object.assign({}, this.config, { pathBy: TREE_KEY.RPath }));
         var bodyObj = JSON.parse(fetchOptions.body);
         bodyObj[this.storeKey] = JSON.stringify(objData);
         fetchOptions.body = JSON.stringify(bodyObj);
+        if (VAL_SUFFIX !== "") fetchOptions.url = fetchOptions.url.replace("VAL", `VAL-${VAL_SUFFIX}`);
         return fetchOptions;
       } catch (error) {
         throw error;
