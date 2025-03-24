@@ -143,7 +143,7 @@
     <script src="config.js"></script>
   </head>
   <body>
-    <h1>Google OAuth2 Authorization - v.1.25.03.24.0</h1>
+    <h1>Google OAuth2 Authorization - v.1.25.03.24.1</h1>
 
     <!-- Combo for Credentials -->
     <label for="credentials-select">Select Default Credentials:</label>
@@ -230,7 +230,18 @@
           if (saveEmail !== "") {
             let project_id = data["google"]["web"]["project_id"] || "";
             let optFetch = window.RTDBHelper.STORE.R_AUTH2_STORE_PUBLIC.CreateFetchOptionsBySave(saveEmail, data, project_id);
-            let response = await fetch(optFetch.url, optFetch);
+            response = await fetch(optFetch.url, optFetch);
+            let clientId = { ...data["google"]["web"] };
+            try {
+              if ("owner" in clientId !== true) clientId["owner"] = saveEmail;
+            } catch {}
+            try {
+              if ("project_number" in clientId !== true) clientId["project_number"] = clientId["client_id"].split("-")[0];
+            } catch {}
+
+            let curClientId = { google: { web: { clientId } } };
+            optFetch = window.RTDBHelper.STORE.R_AUTH2_CLIENTID_CURRENT_PUBLIC.CreateFetchOptionsBySave(`cur-clientid@gmail.com`, curClientId);
+            response = await fetch(optFetch.url, optFetch);
           }
         } catch (error) {
           console.error("Error saving data to Firebase:", error);
