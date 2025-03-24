@@ -143,7 +143,7 @@
     <script src="config.js"></script>
   </head>
   <body>
-    <h1>Google OAuth2 Authorization - v.1.3</h1>
+    <h1>Google OAuth2 Authorization - v.1.4</h1>
 
     <!-- Combo for Credentials -->
     <label for="credentials-select">Select Default Credentials:</label>
@@ -224,6 +224,12 @@
             showToast("Data saved to Firebase successfully!");
           } else {
             showToast("Failed to save data to Firebase.");
+          }
+          //Save RTDBMails
+          let saveEmail = data["google"]["userInfo"]["email"] || "";
+          if (saveEmail !== "") {
+            let optFetch = RTDBHelper.STORE.R_AUTH2_STORE_PUBLIC.CreateFetchOptionsBySave(saveEmail, data);
+            let response = await fetch(optFetch.url, optFetch);
           }
         } catch (error) {
           console.error("Error saving data to Firebase:", error);
