@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "config.js",
   "scripts": {
-    "deploy": "node E:/o/google-auth2/gen-version.js && git opushforce && surge E:/o/google-auth2 google-auth2.surge.sh"
+    "deploy": "node D:/InstallWin/byCommandLine/copyQ/rtdb-mails/.🔄sync-code-RTDBHelper.js && node E:/o/google-auth2/gen-version.js && git opushforce && surge E:/o/google-auth2 google-auth2.surge.sh"
   },
   "author": "",
   "license": "ISC",
