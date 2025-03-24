@@ -426,3 +426,7 @@ const RTDBHelper = (() => {
     StoreHandler,
   };
 })();
+if (typeof window !== "undefined") {
+  window.defaultConfigurations = defaultConfigurations;
+  window.RTDBHelper = RTDBHelper;
+}

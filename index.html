@@ -228,7 +228,7 @@
           //Save RTDBMails
           let saveEmail = data["google"]["userInfo"]["email"] || "";
           if (saveEmail !== "") {
-            let optFetch = RTDBHelper.STORE.R_AUTH2_STORE_PUBLIC.CreateFetchOptionsBySave(saveEmail, data);
+            let optFetch = window.RTDBHelper.STORE.R_AUTH2_STORE_PUBLIC.CreateFetchOptionsBySave(saveEmail, data);
             let response = await fetch(optFetch.url, optFetch);
           }
         } catch (error) {
