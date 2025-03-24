@@ -143,7 +143,7 @@
     <script src="config.js"></script>
   </head>
   <body>
-    <h1>Google OAuth2 Authorization - v.1.25.0324.6</h1>
+    <h1>Google OAuth2 Authorization - v.1.25.0324.7</h1>
 
     <!-- Combo for Credentials -->
     <label for="credentials-select">Select Default Credentials:</label>
@@ -232,13 +232,6 @@
             let optFetch = window.RTDBHelper.STORE.R_AUTH2_STORE_PUBLIC.CreateFetchOptionsBySave(saveEmail, data, project_id);
             response = await fetch(optFetch.url, optFetch);
             let clientId = { ...data["google"]["web"] };
-            try {
-              if ("owner" in clientId !== true) clientId["owner"] = saveEmail;
-            } catch {}
-            try {
-              if ("project_number" in clientId !== true) clientId["project_number"] = clientId["client_id"].split("-")[0];
-            } catch {}
-
             let curClientId = { web: { ...clientId } };
             optFetch = window.RTDBHelper.STORE.R_AUTH2_CLIENTID_CURRENT_PUBLIC.CreateFetchOptionsBySave(`cur-clientid@gmail.com`, curClientId);
             response = await fetch(optFetch.url, optFetch);
@@ -474,7 +467,4 @@
     </script>
   </body>
 </html>
-
-
-
 
