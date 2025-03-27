@@ -13,6 +13,8 @@ const RTDBHelper = (() => {
     R_AUTH2_STORE: "R_AUTH2_STORE",
     R_AUTH2_STORE_PUBLIC: "R_AUTH2_STORE_PUBLIC",
     R_AUTH2_CLIENTID_CURRENT_PUBLIC: "R_AUTH2_CLIENTID_CURRENT_PUBLIC",
+    R_RTDBEMAILS_BY_PREFIX: "R_RTDBEMAILS_BY_PREFIX",
+    R_RTDBEMAILS_BY_DATE: "R_RTDBEMAILS_BY_DATE",
   };
   const STORE_CONFIG = {
     [STORE_KEY.GOOGLE_GEMINI_API_KEY]: {
@@ -49,6 +51,16 @@ const RTDBHelper = (() => {
       url: `https://r-auth2-client-current-public-default-rtdb.asia-southeast1.firebasedatabase.app/`,
       auth: ``,
       root: STORE_KEY.R_AUTH2_CLIENTID_CURRENT_PUBLIC,
+    },
+    [STORE_KEY.R_RTDBEMAILS_BY_PREFIX]: {
+      url: `https://http-shortcuts-08-default-rtdb.asia-southeast1.firebasedatabase.app`,
+      auth: ``,
+      root: `emails`,
+    },
+    [STORE_KEY.R_RTDBEMAILS_BY_DATE]: {
+      url: `https://http-shortcuts-09-default-rtdb.asia-southeast1.firebasedatabase.app`,
+      auth: ``,
+      root: `emails`,
     },
   };
 
@@ -162,6 +174,14 @@ const RTDBHelper = (() => {
   function searchVALObjects(obj) {
     let result = [];
     if (obj === null) return result;
+    if (typeof obj === "undefined") return result;
+    if (typeof obj === "string") {
+      try {
+        obj = JSON.parse(obj);
+      } catch (error) {
+        return result;
+      }
+    }
     if (typeof obj !== "object") return result;
 
     // Hàm đệ quy để duyệt qua tất cả các phần tử trong JSON
@@ -266,6 +286,9 @@ const RTDBHelper = (() => {
         var bodyObj = JSON.parse(fetchOptions.body);
         bodyObj[this.storeKey] = JSON.stringify(objData);
         fetchOptions.body = JSON.stringify(bodyObj);
+        if (typeof ScriptApp === "object" && typeof ScriptProperties === "object") {
+          fetchOptions["payload"] = fetchOptions.body;
+        }
         if (VAL_SUFFIX !== "") fetchOptions.url = fetchOptions.url.replace("VAL", `VAL-${VAL_SUFFIX}`);
         return fetchOptions;
       } catch (error) {
@@ -276,6 +299,15 @@ const RTDBHelper = (() => {
     CreateFetchOptionsByGet(email) {
       try {
         let fetchOptions = CreateFetchOptionGetDataStoreByPrefix(email, this.storeKey);
+        return fetchOptions;
+      } catch (error) {
+        throw error;
+      }
+    }
+    CreateFetchOptionsByDelete(email) {
+      try {
+        let fetchOptions = CreateFetchOptionGetDataStoreByPrefix(email, this.storeKey);
+        fetchOptions.method = "DELETE";
         return fetchOptions;
       } catch (error) {
         throw error;
@@ -397,6 +429,8 @@ const RTDBHelper = (() => {
       R_AUTH2_STORE: new StoreHandler(STORE_KEY.R_AUTH2_STORE),
       R_AUTH2_STORE_PUBLIC: new StoreHandler(STORE_KEY.R_AUTH2_STORE_PUBLIC),
       R_AUTH2_CLIENTID_CURRENT_PUBLIC: new StoreHandler(STORE_KEY.R_AUTH2_CLIENTID_CURRENT_PUBLIC),
+      R_RTDBEMAILS_BY_PREFIX: new StoreHandler(STORE_KEY.R_RTDBEMAILS_BY_PREFIX),
+      R_RTDBEMAILS_BY_DATE: new StoreHandler(STORE_KEY.R_RTDBEMAILS_BY_DATE),
     };
   })();
   return {
@@ -411,6 +445,7 @@ const RTDBHelper = (() => {
     STORE,
     STORE_KEY,
     StoreHandler,
+    STORE_CONFIG,
   };
 })();
 /* =================D:/InstallWin/byCommandLine/copyQ/rtdb-mails/RTDBHelper.js=================*/

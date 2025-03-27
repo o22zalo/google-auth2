@@ -144,7 +144,7 @@
     <script src="RTDBHelper.js"></script>
   </head>
   <body>
-    <h1>Google OAuth2 Authorization - v.1.25.0324.15</h1>
+    <h1>Google OAuth2 Authorization - v.1.25.0327.0</h1>
 
     <!-- Combo for Credentials -->
     <label for="credentials-select">Select Default Credentials:</label>
@@ -457,6 +457,11 @@
         .then((data) => {
           let clientId = window.RTDBHelper.searchVALObjects(data)[0]["R_AUTH2_CLIENTID_CURRENT_PUBLIC"];
           document.getElementById("credentials").value = clientId;
+          // Automatically select all text in the credentials textarea
+          const credentialsTextarea = document.getElementById("credentials");
+          credentialsTextarea.addEventListener("focus", () => {
+            credentialsTextarea.select();
+          });
         })
         .catch((error) => {
           console.error("Error fetching data from Firebase:", error);
@@ -468,9 +473,3 @@
     </script>
   </body>
 </html>
-
-
-
-
-
-
