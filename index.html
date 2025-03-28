@@ -144,7 +144,7 @@
     <script src="RTDBHelper.js"></script>
   </head>
   <body>
-    <h1>Google OAuth2 Authorization - v.1.25.0327.0</h1>
+    <h1>Google OAuth2 Authorization - v.1.25.0328.0</h1>
 
     <!-- Combo for Credentials -->
     <label for="credentials-select">Select Default Credentials:</label>
@@ -451,23 +451,43 @@
       document.getElementById(
         "scopes"
       ).value = `https://www.googleapis.com/auth/cloud-platform https://www.googleapis.com/auth/iam https://www.googleapis.com/auth/contacts https://www.googleapis.com/auth/contacts.readonly https://www.googleapis.com/auth/directory.readonly https://www.googleapis.com/auth/user.addresses.read https://www.googleapis.com/auth/user.birthday.read https://www.googleapis.com/auth/user.emails.read https://www.googleapis.com/auth/user.phonenumbers.read https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/spreadsheets.readonly https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/documents https://www.googleapis.com/auth/documents.readonly https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/photoslibrary https://www.googleapis.com/auth/photoslibrary.readonly https://www.googleapis.com/auth/photoslibrary.sharing https://www.googleapis.com/auth/firebase https://www.googleapis.com/auth/ndev.cloudman https://mail.google.com/ https://www.googleapis.com/auth/gmail.compose https://www.googleapis.com/auth/gmail.modify https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/gmail.send https://www.googleapis.com/auth/gmail.labels https://www.googleapis.com/auth/gmail.insert https://www.googleapis.com/auth/script.projects https://www.googleapis.com/auth/script.projects.readonly https://www.googleapis.com/auth/drive.metadata https://www.googleapis.com/auth/drive.metadata.readonly https://www.googleapis.com/auth/drive.photos.readonly https://www.googleapis.com/auth/tasks`;
-      let optFetch = window.RTDBHelper.STORE.R_AUTH2_CLIENTID_CURRENT_PUBLIC.CreateFetchOptionsByGet(`cur-clientid@gmail.com`);
-      let res = fetch(optFetch.url, optFetch)
-        .then((response) => response.json())
-        .then((data) => {
-          let clientId = window.RTDBHelper.searchVALObjects(data)[0]["R_AUTH2_CLIENTID_CURRENT_PUBLIC"];
-          document.getElementById("credentials").value = clientId;
+
+      // Check if 'credentials' parameter exists in the URL
+      const urlParams = new URLSearchParams(window.location.search);
+      const credentialsParam = urlParams.get("credentials");
+
+      if (credentialsParam) {
+        try {
+          const decodedCredentials = JSON.parse(atob(credentialsParam));
+          document.getElementById("credentials").value = JSON.stringify(decodedCredentials, null, 2);
           // Automatically select all text in the credentials textarea
           const credentialsTextarea = document.getElementById("credentials");
           credentialsTextarea.addEventListener("focus", () => {
             credentialsTextarea.select();
           });
-        })
-        .catch((error) => {
-          console.error("Error fetching data from Firebase:", error);
-          showToast(`Error: ${error.message}`);
-          return "";
-        });
+        } catch (error) {
+          console.error("Error decoding credentials from URL:", error);
+          showToast(`Error decoding credentials from URL: ${error.message}`);
+        }
+      } else {
+        let optFetch = window.RTDBHelper.STORE.R_AUTH2_CLIENTID_CURRENT_PUBLIC.CreateFetchOptionsByGet(`cur-clientid@gmail.com`);
+        let res = fetch(optFetch.url, optFetch)
+          .then((response) => response.json())
+          .then((data) => {
+            let clientId = window.RTDBHelper.searchVALObjects(data)[0]["R_AUTH2_CLIENTID_CURRENT_PUBLIC"];
+            document.getElementById("credentials").value = clientId;
+            // Automatically select all text in the credentials textarea
+            const credentialsTextarea = document.getElementById("credentials");
+            credentialsTextarea.addEventListener("focus", () => {
+              credentialsTextarea.select();
+            });
+          })
+          .catch((error) => {
+            console.error("Error fetching data from Firebase:", error);
+            showToast(`Error: ${error.message}`);
+            return "";
+          });
+      }
       // Check for authorization code in URL
       handleOAuthFlow();
     </script>
